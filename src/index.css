@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* @theme {
+} */
+
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+#frame {
+  app-region: drag;
+}
+#frame button {
+  app-region: no-drag;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.4s ease-out;
+}

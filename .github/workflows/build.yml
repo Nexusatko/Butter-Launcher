@@ -35,24 +35,15 @@ jobs:
           git tag v$env:VERSION
           git push origin v$env:VERSION
 
-      - name: Build Windows launcher
+      - name: Build Windows EXE (Electron Builder)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: pwsh
-        run: npm run build
+        run: npm run release
 
-      - name: List build files (debug)
-        shell: pwsh
-        run: |
-          if (Test-Path dist) { dir dist } else { echo "dist folder not found" }
-
-      - name: Create GitHub Release + Upload EXE
+      - name: Upload EXE to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
-          prerelease: ${{ contains(env.VERSION, 'beta') || contains(env.VERSION, 'alpha') }}
-          files: |
-            dist/*.exe
+          files: dist/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

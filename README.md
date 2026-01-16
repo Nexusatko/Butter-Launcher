@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/Website-butterlauncher.tech-facc15?style=flat-square&logo=google-chrome&logoColor=white" alt="Website">
   </a>
   <a href="https://discord.gg/3eXr8qhQpq">
-    <img src="https://img.shields.io/discord/1234567890?color=5865F2&label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
+    <img src="https://img.shields.io/discord/1461711146238218310?color=5865F2&label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
   </a>
   <a href="https://github.com/vzylev/butter-launcher/releases">
     <img src="https://img.shields.io/github/v/release/vzylev/butter-launcher?style=flat-square&color=2ea44f" alt="Latest Release">

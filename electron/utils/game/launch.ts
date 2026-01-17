@@ -6,6 +6,19 @@ import fs from "fs";
 import { genUUID } from "./uuid";
 import { installGame } from "./install";
 
+const ensureExecutable = (filePath: string) => {
+  if (process.platform === "win32") return;
+  try {
+    const st = fs.statSync(filePath);
+    // If user execute bit isn't set, try to fix it.
+    if ((st.mode & 0o100) === 0) {
+      fs.chmodSync(filePath, 0o755);
+    }
+  } catch {
+    // ignore
+  }
+};
+
 export const launchGame = async (
   baseDir: string,
   version: GameVersion,
@@ -71,31 +84,47 @@ export const launchGame = async (
     username,
   ];
 
-  try {
-    const child = spawn(client, args, {
-      windowsHide: true,
-      shell: false,
-      cwd: dirname(client),
-    });
+  const spawnClient = (attempt: number) => {
+    try {
+      const child = spawn(client, args, {
+        windowsHide: true,
+        shell: false,
+        cwd: dirname(client),
+      });
 
-    child.on("spawn", () => {
-      win.webContents.send("launched");
-    });
+      child.on("spawn", () => {
+        win.webContents.send("launched");
+      });
 
-    child.on("error", (error) => {
-      console.error(`Error launching game: ${error.message}`);
-      win.webContents.send("launch-error", error.message);
-    });
+      child.on("error", (error: NodeJS.ErrnoException) => {
+        // Common on Linux when the downloaded binary loses the executable bit.
+        if (error?.code === "EACCES" && attempt === 0) {
+          console.warn("Launch EACCES: attempting to chmod +x and retry", client);
+          ensureExecutable(client);
+          spawnClient(1);
+          return;
+        }
 
-    child.on("close", (code, signal) => {
-      if (code && code !== 0) {
-        console.error(`Game exited with code ${code}${signal ? ` (signal ${signal})` : ""}`);
-      }
-      win.webContents.send("launch-finished", { code, signal });
-    });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Error launching game: ${msg}`);
-    win.webContents.send("launch-error", msg);
-  }
+        console.error(`Error launching game: ${error.message}`);
+        win.webContents.send("launch-error", error.message);
+      });
+
+      child.on("close", (code, signal) => {
+        if (code && code !== 0) {
+          console.error(
+            `Game exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
+          );
+        }
+        win.webContents.send("launch-finished", { code, signal });
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      console.error(`Error launching game: ${msg}`);
+      win.webContents.send("launch-error", msg);
+    }
+  };
+
+  // Best-effort: ensure executable bit before the first spawn.
+  ensureExecutable(client);
+  spawnClient(0);
 };

@@ -14,6 +14,35 @@ import { patchOnlineClientIfNeeded } from "./onlinePatch";
 
 const pipeline = promisify(stream.pipeline);
 
+const ensureExecutable = (filePath: string) => {
+  if (process.platform === "win32") return;
+  try {
+    const st = fs.statSync(filePath);
+    if ((st.mode & 0o100) === 0) {
+      fs.chmodSync(filePath, 0o755);
+    }
+  } catch {
+    // ignore
+  }
+};
+
+const ensureClientExecutable = (gameDir: string, version: GameVersion) => {
+  try {
+    const os = process.platform;
+    const clientName = os === "win32" ? "HytaleClient.exe" : "HytaleClient";
+    const clientPath = path.join(
+      gameDir,
+      "game",
+      version.type,
+      "Client",
+      clientName,
+    );
+    ensureExecutable(clientPath);
+  } catch {
+    // ignore
+  }
+};
+
 // manifest helpers live in ./manifest
 
 const downloadPWR = async (
@@ -282,6 +311,9 @@ export const installGame = async (
       // Record the installed build so future updates can detect when patching is needed.
       writeInstalledManifest(gameDir, version);
 
+      // On Linux/macOS, downloaded binaries may lose the executable bit.
+      ensureClientExecutable(gameDir, version);
+
       // Apply online client patch (if url+hash exists for this build).
       await patchOnlineClientIfNeeded(gameDir, version, win, "install-progress");
     } else {
@@ -308,6 +340,8 @@ export const installGame = async (
         if (applyFixResult === false) return;
 
         writeInstalledManifest(gameDir, version);
+
+        ensureClientExecutable(gameDir, version);
 
         await patchOnlineClientIfNeeded(gameDir, version, win, "install-progress");
       }

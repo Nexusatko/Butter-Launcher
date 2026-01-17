@@ -70,7 +70,7 @@ If you want to contribute or build Butter Launcher yourself:
     git clone [https://github.com/vzylev/butter-launcher.git](https://github.com/vzylev/butter-launcher.git)
     cd butter-launcher
     ```
-
+ 
 2.  **Install dependencies**
     ```bash
     npm install

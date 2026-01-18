@@ -19,6 +19,15 @@ const ensureExecutable = (filePath: string) => {
   }
 };
 
+const isWaylandSession = (): boolean => {
+  return (
+    process.platform === "linux" &&
+    (process.env.XDG_SESSION_TYPE === "wayland" ||
+      process.env.WAYLAND_DISPLAY !== undefined ||
+      process.env.DISPLAY === undefined)
+  );
+};
+
 export const launchGame = async (
   baseDir: string,
   version: GameVersion,
@@ -98,6 +107,13 @@ export const launchGame = async (
 
   const spawnClient = (attempt: number) => {
     try {
+      const env = { ...process.env };
+      
+      if (isWaylandSession()) {
+        console.log("Wayland session detected, setting SDL_VIDEODRIVER=wayland");
+        env.SDL_VIDEODRIVER = "wayland";
+      }
+
       const child = spawn(client, args, {
         windowsHide: true,
         shell: false,
@@ -106,6 +122,7 @@ export const launchGame = async (
         // `stdio: "ignore"` + `unref()` prevents the child being tied to the parent lifetime.
         detached: process.platform !== "darwin",
         stdio: "ignore",
+        env: env,
       });
 
       // Ensure the child is not keeping the parent process alive, and (on Windows)

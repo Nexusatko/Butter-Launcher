@@ -30,5 +30,7 @@ interface Window {
     getDefaultGameDirectory: () => Promise<string>;
     openFolder: (folderPath: string) => Promise<{ ok: boolean; error: string | null }>;
     openExternal: (url: string) => Promise<{ ok: boolean; error: string | null }>;
+    getRPCEnabled: () => Promise<boolean>;
+    setRPCEnabled: (enabled: boolean) => Promise<void>;
   };
 }

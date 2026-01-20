@@ -38,10 +38,34 @@ const SettingsModal: React.FC<{
     }
   };
 
+  const handleRPCToggle = async () => {
+    try {
+      const current = await window.config.getRPCEnabled();
+      await window.config.setRPCEnabled(!current);
+      if (!current) {
+        window.document.getElementById("rpc-toggle")?.classList.add("bg-green-500");
+      } else {
+        window.document.getElementById("rpc-toggle")?.classList.remove("bg-green-500");
+      }
+    } catch (e) {
+      console.error("Failed to toggle Discord RPC", e);
+      alert("Failed to toggle Discord RPC");
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     const stored = localStorage.getItem("customUUID") || "";
     setCustomUUID(stored);
+    if (window.document.getElementById("rpc-toggle")) {
+      window.config.getRPCEnabled().then((enabled) => {
+        if (enabled) {
+          window.document.getElementById("rpc-toggle")?.classList.add("bg-green-500");
+        } else {
+          window.document.getElementById("rpc-toggle")?.classList.remove("bg-green-500");
+        }
+      });
+    }
   }, [open]);
 
   useEffect(() => {
@@ -91,6 +115,18 @@ const SettingsModal: React.FC<{
             >
               Open
               <FolderOpen />
+            </button>
+          </div>
+          <div>
+            <label className="text-gray-200 text-sm font-semibold mb-1 block">
+              Discord Rich Presence
+            </label>
+            <button
+              className="flex items-center gap-2 bg-[#23293a] border border-[#3b82f6] text-white px-4 py-2 rounded hover:bg-[#23293a]/80 transition"
+              onClick={handleRPCToggle}> Toggle
+              <div className="w-5 h-5 rounded-full border border-white flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full" id="rpc-toggle" />
+              </div>
             </button>
           </div>
           <div>

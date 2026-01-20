@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
+import Store from "electron-store";
 import { autoUpdater } from "electron-updater";
 import { META_DIRECTORY } from "./utils/const";
 import { logger } from "./utils/logger";
@@ -103,7 +104,9 @@ let backgroundTimeout: NodeJS.Timeout | null = null;
 let isBackgroundMode = false;
 let networkBlockerInstalled = false;
 let isGameRunning = false;
-
+const store = new Store();
+let rpcConnected = false;
+let playingVersion: GameVersion = { type: "release", build_index: 0, url: "", build_name: "" };
 const destroyTray = () => {
   if (!tray) return;
   try {
@@ -287,7 +290,16 @@ function createWindow() {
   });
 
   win.on("ready-to-show", () => {
-    connectRPC();
+    if (store.get("discord-rpc-enabled") === true) {
+      connectRPC();
+      rpcConnected = true;
+    } else {
+      if (store.get("discord-rpc-enabled") === undefined) {
+        store.set("discord-rpc-enabled", true);
+        connectRPC();
+        rpcConnected = true;
+      }
+    }
     try {
       setChoosingVersionActivity();
     } catch {
@@ -305,8 +317,8 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  if (!VITE_DEV_SERVER_URL) {
-  }
+  /*if (!VITE_DEV_SERVER_URL) {
+  }*/
 });
 
 app.on("window-all-closed", () => {
@@ -490,13 +502,13 @@ ipcMain.on(
         clearTimeout(backgroundTimeout);
         backgroundTimeout = null;
       }
-
+      playingVersion = version;
       launchGame(gameDir, version, username, win, 0, customUUID ?? null, {
         onGameSpawned: () => {
           logger.info(`Game spawned: ${version.type} ${version.build_name}`);
           isGameRunning = true;
           try {
-            setPlayingActivity(version);
+            setPlayingActivity(playingVersion);
           } catch {
             // ignore
           }
@@ -592,3 +604,40 @@ ipcMain.on(
     }
   },
 );
+
+ipcMain.handle("get-rpc-enabled", async () => {
+  try {
+    const data = await store.get("discord-rpc-enabled");
+    if (typeof data === "boolean") {
+      return data;
+    }
+    return true;
+  } catch (err) {
+    logger.error("Failed to get RPC enabled state:", err);
+    alert("Failed to get RPC enabled state");
+    return null;
+  }
+});
+
+ipcMain.handle("set-rpc-enabled", async (_, enabled: boolean) => {
+  try {
+    await store.set("discord-rpc-enabled", enabled);
+    if (enabled && !rpcConnected) {
+      await connectRPC();
+      if (isGameRunning) {
+        setTimeout(() => {
+          setPlayingActivity(playingVersion);
+        }, 16000);
+      }
+      rpcConnected = true;
+    } else if (!enabled && rpcConnected) {
+      await disconnectRPC();
+      rpcConnected = false;
+    }
+    return { ok: true, error: null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    logger.error("Failed to set RPC enabled state:", err);
+    return { ok: false, error: message };
+  }
+});

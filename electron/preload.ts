@@ -35,4 +35,6 @@ contextBridge.exposeInMainWorld("config", {
   openExternal: (url: string) => ipcRenderer.invoke("open-external", url),
   OS: process.platform,
   ARCH: process.arch,
+  getRPCEnabled: () => ipcRenderer.invoke("get-rpc-enabled"),
+  setRPCEnabled: (enabled: boolean) => ipcRenderer.invoke("set-rpc-enabled", enabled),
 });

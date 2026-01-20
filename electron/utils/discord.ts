@@ -49,7 +49,7 @@ export const setActivity = (activity?: SetActivity) => {
     ...activity,
   };
 
-  client.user?.setActivity(rpcActivity).catch((err: any) => {
+  client.user?.setActivity(rpcActivity).catch((err) => {
     logger.error("Discord RPC error:", err);
   });
 };
@@ -59,9 +59,8 @@ export const connectRPC = async () => {
     .login()
     .then(() => {
       logger.info("Discord RPC connected");
-      setChoosingVersionActivity();
     })
-    .catch((err: any) => {
+    .catch((err) => {
       logger.error("Discord RPC error:", err);
     });
 };
@@ -71,7 +70,7 @@ export const clearActivity = async () => {
 
   try {
     await client.user?.clearActivity();
-  } catch (err: any) {
+  } catch (err) {
     logger.error("An error occurred while clearing Discord RPC activity", err);
   }
 };
@@ -82,8 +81,8 @@ export const disconnectRPC = async () => {
 
   // Destroy/close the IPC connection to Discord so presence doesn't linger.
   try {
-    (client as any).destroy?.();
-  } catch (err: any) {
+    client.destroy?.();
+  } catch (err) {
     logger.error("An error occurred while disconnecting Discord RPC", err);
   }
 };

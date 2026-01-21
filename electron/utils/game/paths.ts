@@ -118,9 +118,32 @@ export const resolveExistingInstallDir = (baseDir: string, version: GameVersion)
 };
 
 export const resolveClientPath = (installDir: string) => {
-  const os = process.platform;
-  const clientName = os === "win32" ? "HytaleClient.exe" : "HytaleClient";
-  return path.join(installDir, "Client", clientName);
+  const clientDir = path.join(installDir, "Client");
+  const isWin = process.platform === "win32";
+
+  const candidates = isWin
+    ? ["HytaleClient.exe", "HytaleClient"]
+    : ["HytaleClient", "HytaleClient.x86_64", "HytaleClient.bin", "hytaleclient"];
+
+  for (const name of candidates) {
+    const p = path.join(clientDir, name);
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {
+    }
+  }
+
+  try {
+    const entries = fs.readdirSync(clientDir, { withFileTypes: true });
+    for (const e of entries) {
+      if (e.isFile() && /^HytaleClient/i.test(e.name)) {
+        return path.join(clientDir, e.name);
+      }
+    }
+  } catch {
+  }
+
+  return path.join(clientDir, isWin ? "HytaleClient.exe" : "HytaleClient");
 };
 
 export const resolveServerPath = (installDir: string) =>

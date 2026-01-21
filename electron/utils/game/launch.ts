@@ -86,7 +86,7 @@ export const launchGame = async (
   const userDir = join(baseDir, "UserData");
   if (!fs.existsSync(userDir)) {
     logger.info(`Creating UserData directory at ${userDir}`);
-    fs.mkdirSync(userDir);
+    fs.mkdirSync(userDir, { recursive: true });
   }
 
   const normalizeUuid = (raw: string): string | null => {
